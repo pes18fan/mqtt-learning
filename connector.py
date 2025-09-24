@@ -1,5 +1,6 @@
 import paho.mqtt.client as mqtt  # import client library
 import time
+from logger import logger
 
 CONNACK_CODES = {
     0: "success",
@@ -13,13 +14,13 @@ CONNACK_CODES = {
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
-        print("Connected OK")
+        logger.info("Connected OK")
     else:
-        print(f"Bad connection, reason: {rc}")
+        logger.error(f"Bad connection, reason: {rc}")
 
 
 def on_disconnect(client, userdata, rc):
-    print(f"Disconnecting, reason: {rc}")
+    logger.info(f"Disconnecting, reason: {rc}")
 
 
 client = mqtt.Client()  # create new instance
@@ -30,21 +31,22 @@ client.on_disconnect = on_disconnect
 client.loop_start()  # Start loop
 
 try:
-    client.connect("localhost")  # connect to broker
+    # connect to broker
+    client.connect("broker.hivemq.com")
 except Exception as e:
-    print(f"Failed to connect: {e}")
+    logger.error(f"Failed to connect: {e}")
     exit(1)
 
 # give it time to connect
 while not client.is_connected():
-    print("Waiting for connection...")
+    logger.info("Waiting for connection...")
     time.sleep(1)
 
 time.sleep(3)   # do something here, for now all I have is a sleep
 
 client.disconnect()
 while client.is_connected():
-    print("Waiting to disconnect...")
+    logger.info("Waiting to disconnect...")
     time.sleep(1)
 
 client.loop_stop()  # Stop loop

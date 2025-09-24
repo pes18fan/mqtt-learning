@@ -23,21 +23,28 @@ def on_disconnect(client, userdata, rc):
     logger.info(f"Disconnecting, reason: {rc}")
 
 
-def on_publish(client, userdata, mid):  # create function for callback
-    logger.info(f"Data published, MID={mid}")
+def on_subscribe(client, userdata, mid, granted_qos):
+    logger.info(f"Subscribed, MID={mid}")
+
+
+def on_message(client, userdata, message):
+    logger.info(f"Message received:  {str(message.payload.decode(
+        "utf-8"))}, topic: {message.topic}, retained: {message.retain}")
+    if message.retain == 1:
+        logger.info("This is a retained message")
 
 
 client = mqtt.Client()  # create new instance
 client.on_connect = on_connect  # bind callback functions
 client.on_disconnect = on_disconnect
-client.on_publish = on_publish
+client.on_subscribe = on_subscribe
+client.on_message = on_message
 
 
 client.loop_start()  # Start loop
 
 try:
-    # connect to broker
-    client.connect("broker.hivemq.com")
+    client.connect("broker.hivemq.com")  # connect to broker
 except Exception as e:
     logger.error(f"Failed to connect: {e}")
     exit(1)
@@ -47,20 +54,16 @@ while not client.is_connected():
     logger.info("Waiting for connection...")
     time.sleep(1)
 
-ret = client.publish("/topic/qos0", "some data")
-while not ret.is_published():
-    logger.info("Waiting for publication...")
-    time.sleep(1)
-
+ret = client.subscribe("house/bulb1")
 ok, mid = ret
-if ok != 0:
-    logger.error(f"Failed to publish with error code {ok}")
+if ok != mqtt.MQTT_ERR_SUCCESS:
+    logger.error(f"Failed to subscribe with code {ok}")
 else:
-    logger.info(f"Queued publication of MID={mid}")
+    logger.info(f"Queued subscription of MID={mid}")
+time.sleep(2)   # wait for subscription
 
-client.disconnect()
-while client.is_connected():
-    logger.info("Waiting to disconnect...")
-    time.sleep(1)
+logger.info("Waiting for a message...")
+while True:
+    pass
 
-client.loop_stop()  # Stop loop
+client.loop_stop()
