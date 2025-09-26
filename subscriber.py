@@ -16,7 +16,7 @@ def on_connect(client, userdata, flags, rc):
     if rc == 0:
         logger.info("Connected OK")
     else:
-        logger.error(f"Bad connection, reason: {rc}")
+        logger.error(f"Bad connection, reason: {CONNACK_CODES[rc]}")
 
 
 def on_disconnect(client, userdata, rc):
